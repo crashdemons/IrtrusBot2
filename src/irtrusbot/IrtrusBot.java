@@ -21,7 +21,7 @@ public class IrtrusBot
 
 	private static void startIRC() throws Exception
 	{
-		String server = "irc.freenode.net", nick = "IrtrusBot2", user = "IrtrusBot2", channel = "#irtrusbot", chan = "";
+		String server = "irc.freenode.net", nick = "IrtrusBot2", user = "IrtrusBot2", channel = "#irtrusbot,#cicada";
 		
                 IrcSession irc=new IrcSession();
                 irc.setAccountDetails(nick,user,"Java Hacks Bot","");//no password=""
