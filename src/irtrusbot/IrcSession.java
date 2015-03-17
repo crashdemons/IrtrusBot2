@@ -1,14 +1,14 @@
 package irtrusbot;
 
-/** Class maintaining information and useful actions pertaining to a client session connected to a server.
- *
- * @author crashdemons <crashdemons -at- github.com>
- */
+
 
 import java.io.*;
 import java.net.*;
 
-
+/** Class maintaining information and useful actions pertaining to a client session connected to a server.
+ *
+ * @author crashdemons <crashdemons -at- github.com>
+ */
 public class IrcSession {
     /** Origin information about the client/user of the session.
      * Contains the user's Nickname, Username text, Hostname, and Ident status
