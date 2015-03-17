@@ -57,7 +57,7 @@ public class IrtrusBot
 	
                         
                 }
-                //socket has disconnected
+                //socket has disconnected.
         }
         
         public static void russianRouletteSpin(){//randomize the bullet placement for a round of russian roulette.
