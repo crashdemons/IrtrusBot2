@@ -8,9 +8,9 @@ import java.util.Random;
 
 public class IrtrusBot
 {
-    static int rr_chamber=0;
-    static int rr_bulletchamber=-1;
-    static Random rand = new Random();
+    static private int rr_chamber=0;
+    static private int rr_bulletchamber=-1;
+    static private final Random rand = new Random();
     
 	public static void main(String[] args) throws Exception
 	{
@@ -19,7 +19,7 @@ public class IrtrusBot
             System.out.println("========================================");
 	}
 
-	public static void startIRC() throws Exception
+	private static void startIRC() throws Exception
 	{
 		String server = "irc.freenode.net", nick = "IrtrusBot2", user = "IrtrusBot2", channel = "#irtrusbot", chan = "";
 		
@@ -33,7 +33,7 @@ public class IrtrusBot
                 irc.sendMessage(irc.account,nick,"++userinit");//this is sent so that we can obtain our full hostmask/identd state easily - useful for post length calculations later.
                 irc.sendRawLine("JOIN "+channel);
                 
-                IrcCommand ic=null;
+                IrcCommand ic;
                 while((ic=irc.readCommand())!=null && irc.isConnected()){
 			//System.out.println("Entered loop...");
 			//debugObject(ic);
@@ -60,11 +60,11 @@ public class IrtrusBot
                 //socket has disconnected.
         }
         
-        public static void russianRouletteSpin(){//randomize the bullet placement for a round of russian roulette.
+        private static void russianRouletteSpin(){//randomize the bullet placement for a round of russian roulette.
             rr_bulletchamber=rand.nextInt(6);// range is [0,6)      .
         }
         
-	public static String russianRouletteFire()
+	private static String russianRouletteFire()
 	{
             if(rr_bulletchamber==-1) russianRouletteSpin();//uninitialized chamber # on first firing.
             if(rr_chamber==rr_bulletchamber){

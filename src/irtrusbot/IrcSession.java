@@ -7,7 +7,6 @@ package irtrusbot;
 
 
 import java.io.*;
-import java.lang.reflect.Field;
 import java.net.*;
 
 /**
@@ -15,7 +14,7 @@ import java.net.*;
  * @author crashdemons <crashdemons -at- github.com>
  */
 public class IrcSession {
-    public IrcOrigin account=new IrcOrigin("","","");
+    public IrcOrigin account;
     String rname="";
     String pass="";
     
@@ -56,7 +55,7 @@ public class IrcSession {
     }
     public void loginwait() throws IOException{
         login();
-        IrcCommand ic=null;
+        IrcCommand ic;
         while((ic=readCommand())!=null && isConnected()){
             if( ic.ntype>=1 && ic.ntype<=4) break;//RFC2812 $5.1 "The server sends Replies 001 to 004 to a user upon successful registration."
             if(isFatalCommand(ic)) break;
@@ -73,7 +72,7 @@ public class IrcSession {
         if(!isConnected()) return null;
         String line=reader.readLine();
         if(line==null) throw new IOException("null");
-        if(line!=null) received++;
+        received++;
         System.out.println("< "+line);
         return line;
     }
@@ -95,9 +94,8 @@ public class IrcSession {
     }
     public boolean isFatalNumeric(int ntype){
         //RFC2812 $5.2 "Error replies are found in the range from 400 to 599."
-        if(ntype>=431 && ntype<=436) return true;//all fatal nickname errors
-        if(ntype>=451 && ntype<=465) return true;//notregistered, needmoreparams, ... passwordmismatch, banned, etc.
-        return false;
+        return ( (ntype>=431 && ntype<=436)   //all fatal nickname errors
+               ||(ntype>=451 && ntype<=465) );//notregistered, needmoreparams, ... passwordmismatch, banned, etc.
     }
     public boolean isFatalCommand(IrcCommand ic){
         return ( isFatalNumeric(ic.ntype) || ic.type.equals("ERROR") );
@@ -124,6 +122,7 @@ public class IrcSession {
         pass=password;
     }
     public IrcSession(){
+        this.account = new IrcOrigin("","","");
         sent=received=0;
     }
 }

@@ -34,8 +34,8 @@ public class IrcCommand {
         String part="";
         boolean allowspaces=false; //current token allows spaces (by IRC definition, this is the final token)
         boolean terminate=false; //current token is the final token - force adding to the token list and
-        boolean append=true; //controls whether to append the current char to the current token
-        boolean addnow=false; //controls whether to add the current token to the list of tokens at a given iteration
+        boolean append; //controls whether to append the current char to the current token
+        boolean addnow; //controls whether to add the current token to the list of tokens at a given iteration
         
         for(int i=0;i<=iMax;i++){
             addnow=false;//do not force adding the token to the list
@@ -75,7 +75,7 @@ public class IrcCommand {
         origin=null;
         parameters.clear();
         elements=tokenize(s);
-        int iType=-1;//index of the type element text, determined below
+        int iType;//index of the type element text, determined below
 
         if(elements.get(0).startsWith(":")){
             hasOrigin=true;

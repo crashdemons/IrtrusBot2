@@ -13,7 +13,7 @@ public class IrcMessage {
     public IrcOrigin from;
     public String to;
     public String text;
-    private String type="PRIVMSG";//for future ability to implement "NOTICE"
+    private final String type="PRIVMSG";//for future ability to implement "NOTICE"
 
     public String toIncoming() {
         return ":" + from.toString() + " "+type+" " + to + " :" + text;
