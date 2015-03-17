@@ -61,7 +61,7 @@ public class IrtrusBot
         }
         
         public static void russianRouletteSpin(){//randomize the bullet placement for a round of russian roulette.
-            rr_bulletchamber=rand.nextInt(6);// range is [0,6)    
+            rr_bulletchamber=rand.nextInt(6);// range is [0,6)      
         }
         
 	public static String russianRouletteFire()
