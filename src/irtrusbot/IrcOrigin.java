@@ -6,7 +6,7 @@
 package irtrusbot;
 /**
  *
- * @author Crash
+ * @author Crashdemons
  */
 
 import java.util.ArrayList;
