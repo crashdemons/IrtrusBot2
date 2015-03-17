@@ -1,27 +1,42 @@
 package irtrusbot;
 
-/**
+import java.util.*;
+
+/** IRC Command class.
+ *  Represents an IRC command line in the form of different properties and provides related functions.
  *
  * @author Crashdemons
  */
-
-import java.util.*;
-
-
 public class IrcCommand {
+    /** list of tokens for the IRC Command*/
     public ArrayList<String> elements = new ArrayList<String>();
+    /** list of parameters for the IRC Command (tokens after the command name) */
     public ArrayList<String> parameters = new ArrayList<String>();
 
+    /**Command type string (eg: 001, PRIVMSG, JOIN, ERROR) */
     public String type;
+    /**Integer representation for numeric command types (-1 when non-numeric)*/
     public int ntype;
+    /**State whether or not the command type is numeric*/
     public boolean isNumeric;
     
+    /** Origin information about the sender of a command/message - usually a user or the server*/
     public IrcOrigin origin;
+    /**State whether or not the command has an origin field preceding it*/
     public boolean hasOrigin;
 
-
+    /** Determines of the given type string is the same as the current command type
+     * 
+     * @param t Command type string to compare (eg: 001, PRIVMSG, ERROR)
+     * @return True: the type strings match | False: they do not match.
+     */
     public boolean isType(String t){return type.equals(t);}
 
+    /** Tokenizes an IRC Command string into parts (supports space-containing fields at end of command)
+     * 
+     * @param s IRC Command string to tokenize
+     * @return ArrayList collection of token strings.
+     */
     public static ArrayList<String> tokenize(String s){
         int iMax=s.length()-1;
         ArrayList<String> parts = new ArrayList<String>();
@@ -66,6 +81,10 @@ public class IrcCommand {
         return parts;
     }
 
+    /** Tokenize, and determine property values from a given IRC Command string
+     * 
+     * @param s IRC Command string
+     */
     public final void interpret(String s){
         origin=null;
         parameters.clear();
@@ -92,5 +111,9 @@ public class IrcCommand {
         
     }
 
+    /** Create an IRC Command object with properties interpreted from an IRC Command string.
+     * 
+     * @param s IRC Command string
+     */
     public IrcCommand(String s){ interpret(s);}
 }
