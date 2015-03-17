@@ -126,20 +126,4 @@ public class IrcSession {
     public IrcSession(){
         sent=received=0;
     }
-            public static void debugObject(Object obj){
-            StringBuilder sb = new StringBuilder();
-            sb.append(obj.getClass().getName());
-            sb.append(": ");
-            for (Field f : obj.getClass().getDeclaredFields()) {
-                sb.append(f.getName());
-                sb.append("=");
-                try{
-                    sb.append(f.get(obj));
-                }catch(IllegalAccessException e){
-                    sb.append("***PRIVATE***");
-                }
-                sb.append(", ");
-            }
-            System.out.println(sb.toString());
-        }
 }
