@@ -5,7 +5,7 @@ package irtrusbot;
  * @author Crashdemons
  */
 
-import java.util.ArrayList;
+import java.util.*;
 
 
 public class IrcCommand {

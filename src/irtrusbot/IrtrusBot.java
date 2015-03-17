@@ -1,11 +1,10 @@
 package irtrusbot;
-/**
- * @author Surtri <Surtri at irc.freenode.net>
- * modified heavily by crashdemons
- */
-
 import java.util.Random;
 
+/** Main bot class, used for testing the library
+ * @author Surtri <Surtri at irc.freenode.net>
+ * @author crashdemons
+ */
 public class IrtrusBot
 {
     static private int rr_chamber=0;

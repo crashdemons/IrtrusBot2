@@ -4,8 +4,7 @@ package irtrusbot;
  * @author Crashdemons
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 public class IrcOrigin {
     public ArrayList<String> elements = new ArrayList<String>();
