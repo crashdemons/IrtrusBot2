@@ -53,6 +53,7 @@ public class IrcMessage {
     }
 }
 
+@SuppressWarnings("serial")
 class IrcMessageCommandException extends Exception{
   public IrcMessageCommandException(String message){ super(message); }
   
