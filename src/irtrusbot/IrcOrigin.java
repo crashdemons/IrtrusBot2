@@ -33,7 +33,9 @@ public class IrcOrigin {
     /**State whether or not the message was sent by an IRC Server (has server property set) */
     public boolean isServer;
     
-    /** tokenize the origin string and set object properties*/
+    /** Tokenize the origin string and set object properties
+     * @param s origin string to read into the object.
+     */
     public final void interpret(String s){
         if(s.startsWith(":")) s=s.substring(1);//trim off leading :
         elements = new ArrayList<String>(Arrays.asList(s.split("[!@]")));

@@ -3,7 +3,7 @@ package irtrusbot;
 /** IRC Privmsg/Notice class.
  * Provides a manipulable representation of IRC Message type commands.
  * Can be used to create, interpret, or validate PRIVMSG lines.
- * @author crashdemons <crashdemons -at- github.com>
+ * @author crashdemons [crashdemons -at- github.com]
  */
 public class IrcMessage {
     /** Origin object indicating information about the sender of the message. */

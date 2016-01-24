@@ -7,7 +7,7 @@ import java.net.*;
 
 /** Class maintaining information and useful actions pertaining to a client session connected to a server.
  *
- * @author crashdemons <crashdemons -at- github.com>
+ * @author crashdemons [crashdemons -at- github.com]
  */
 public class IrcSession {
     /** Origin information about the client/user of the session.
@@ -16,6 +16,8 @@ public class IrcSession {
     public IrcOrigin account;
     String rname="";
     String pass="";
+    
+    //public boolean doIdentify=false;
     
     
     /** IRC Server being connected to*/
@@ -33,10 +35,10 @@ public class IrcSession {
     
     /** QUIT (if possible) and close the current IRC connection
      * 
-     * @throws IOException Error occured while sending QUIT or closing socket.
+     * @throws IOException Error occurred while sending QUIT or closing socket.
      */
     public void disconnect() throws IOException{
-        if(socket.isConnected()){
+        if(isConnected()){
             sendRawLine("QUIT :disconnecting");
             try{Thread.sleep(1000);}catch(Exception e){}
             socket.close();
@@ -63,7 +65,10 @@ public class IrcSession {
      * 
      * @return True: currently connected to server. False: disconnected/not connected to any server.
      */
-    public boolean isConnected(){ if(socket==null) return false; return socket.isConnected(); }
+    public boolean isConnected(){ 
+        if(socket==null) return false;
+        else return socket.isConnected();
+    }
     
     /** Sends the configured user information to the server (for initial connections).
      * This includes NICK and USER commands.
@@ -77,7 +82,7 @@ public class IrcSession {
     }
     
     /** Sends user information and waits for success or failure indicators (001-004 or specific error codes)
-     * @see login()
+     * @see #login()
      * @throws IOException Error reading or sending data.
      */
     public void loginwait() throws IOException{
@@ -161,7 +166,7 @@ public class IrcSession {
      * @param im IRC Message object being replied-to.
      * @param text Message text being sent in reply.
      * @param direct True: Message is sent via private-message to the replyee | False: message will the channel the replyee used, if possible.
-     * @throws IOException 
+     * @throws IOException Error sending data.
      */
     public void sendReply(IrcMessage im,String text, boolean direct) throws IOException{
         sendMessage(im.getReply(account, text, direct));
@@ -203,11 +208,11 @@ public class IrcSession {
     
     /** Set user information (transmitted to server on initial connections).
      * This user information is used in login() and identify().
-     * @param nickname
-     * @param username
-     * @param realname
-     * @param password 
-     * @see login()
+     * @param nickname nickname to use for the session
+     * @param username username/ident name to use during the session
+     * @param realname "real name" text to use during the session
+     * @param password password to identify with
+     * @see #login()
      */
     public void setAccountDetails(String nickname,String username,String realname,String password){
         account.nick=nickname;

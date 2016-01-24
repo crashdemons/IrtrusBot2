@@ -1,2 +1,4 @@
 # IrtrusBot2
-Fork of IrtrusBot (offline)
+Fork of IrtrusBot by Surtri
+
+
