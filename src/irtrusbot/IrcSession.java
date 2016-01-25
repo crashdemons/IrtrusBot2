@@ -85,14 +85,34 @@ public class IrcSession {
      * @see #login()
      * @throws IOException Error reading or sending data.
      */
-    public void loginwait() throws IOException{
+    public IrcLoginState loginwait() throws IOException{
         login();
         IrcCommand ic;
         while((ic=readCommand())!=null && isConnected()){
-            if( ic.ntype>=1 && ic.ntype<=4) break;//RFC2812 $5.1 "The server sends Replies 001 to 004 to a user upon successful registration."
+            if( ic.ntype>=1 && ic.ntype<=4) return IrcLoginState.SUCCESS;//RFC2812 $5.1 "The server sends Replies 001 to 004 to a user upon successful registration."
             if(isFatalCommand(ic)) break;
         }
+        return IrcLoginState.FAILURE;
     }
+    
+    /** Checks an IrcCommand received after a login() attempt and suggests whether the login succeeded, failed, or we're still waiting for a proper response.
+     * SUCCESS occurs when a message 001-004 are sent per RFC2812 $5.1
+     * 
+     * Using login() and logincheck() together is non-blocking alternative to using loginwait()
+     * @see #login()
+     * @see #loginwait()
+     * @param ic The IrcCommand to check 
+     * @return the result of the login attempt thus far, described by the IrcLoginState value. | SUCCESS: The command type was 001-004 | FAILURE: The connection is not open or a fatal error command was received. | WAIT: the command was of no significance to the login process.
+     */
+    public IrcLoginState logincheck(IrcCommand ic){
+        if(!isConnected()) return IrcLoginState.FAILURE;
+        if(ic!=null){
+            if( ic.ntype>=1 && ic.ntype<=4) return IrcLoginState.SUCCESS;
+            if(isFatalCommand(ic)) return IrcLoginState.FAILURE;
+        }
+        return IrcLoginState.WAIT;
+    }
+    
     
     /** Sends a Nickserv Identify command, if a password is set.
      * The exact format used is {@code PRIVMSG NickServ :IDENTIFY passwordhere}
