@@ -9,7 +9,10 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Queue;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -19,7 +22,8 @@ import java.util.jar.JarFile;
  */
 public class IrcPluginManager  {
     private IrcBot bot=null;
-    private ArrayList<IrcPlugin> plugins=new ArrayList<IrcPlugin>();
+    private Map<String,IrcPlugin> plugins=new HashMap<String,IrcPlugin>();
+    Queue<IrcEvent> events = new LinkedList<IrcEvent>();
     
     /** Construct the class and include an instance of the Bot constructing it
      * 
@@ -29,46 +33,86 @@ public class IrcPluginManager  {
         bot=b;
     }
     
-    /** Transmit a blank IrcEvent message to plugins with only the Type specified.
+    /** Queues a blank IrcEvent message for processing with only the Type specified.
      * Useful for sending events that do not have attached data.
      * 
      * @param t The event type
-     * @return true: None of the plugins receiving the event requested the action spawning it be canceled (ie: CANCEL_EVENT) | false: A plugin requested the action be canceled | NOTE: this does not account for use of STOP_PROPAGATION.
-     * @throws Exception An error occurred within a plugin event handler.
      */
-    public boolean dispatch(IrcEventType t)  throws Exception{
-        return dispatch(t,null);
+    public void postEvent(IrcEventType t) {
+        postEvent(t,null);
     }
-    /** Transmit an IrcEvent message to plugins with the Type and IRC Command specified.
+    /** Queues an IrcEvent message for processing with the Type and IRC Command specified.
      * Generally used for COMMAND and CHAT events
      * 
      * @param t The event type
      * @param ic The IRC Command to send.
-     * @return true: None of the plugins receiving the event requested the action spawning it be canceled (ie: CANCEL_EVENT) | false: A plugin requested the action be canceled | NOTE: this does not account for use of STOP_PROPAGATION.
-     * @throws Exception An error occurred within a plugin event handler.
      */
-    public boolean dispatch(IrcEventType t, IrcCommand ic)  throws Exception
+    public void postEvent(IrcEventType t, IrcCommand ic)
     {
         //if(ic==null && t==IrcEventType.COMMAND) System.out.println("COMMAND NULL AT DISPATCHER1");
-        return dispatch(new IrcEvent( t, bot.laststate,  bot.state, ic));
+        postEvent(new IrcEvent( t, bot.laststate,  bot.state, ic));
     }
     
-    /** Transmit an IrcEvent message object to plugins.
+    /** Queues an IrcEvent message object for processing.
      * 
      * @param event The event object containing fields describing the event.
-     * @return true: None of the plugins receiving the event requested the action spawning it be canceled (ie: CANCEL_EVENT) | false: A plugin requested the action be canceled | NOTE: this does not account for use of STOP_PROPAGATION.
-     * @throws Exception An error occurred within a plugin event handler.
      */
-    public boolean dispatch(IrcEvent event)  throws Exception {
-        //if(event.command==null && event.type==IrcEventType.COMMAND) System.out.println("COMMAND NULL AT DISPATCHER2");
-        for (IrcPlugin plugin : plugins){
+    public void postEvent(IrcEvent event) {
+        events.add(event);
+    }
+    
+    /** Synchronously processes an IrcEvent object against plugins
+     * This method should generally not be used by plugins if it can be avoided. Prefer postEvent() instead.
+     * PLUGIN event messages will cause the plugin to be enabled or disabled within the time of this function call.
+     * @param event Event to be processed
+     * @return The event action indicated by plugin(s). CANCEL_EVENT implies higher post-processing (such as data transmission actions) should be canceled.
+     * @throws Exception An error occurred within a plugin event handler.
+     * @see #postEvent(IrcEvent)
+     */
+    public IrcEventAction sendEvent(IrcEvent event)  throws Exception {
+        for (Map.Entry<String,IrcPlugin> entry : plugins.entrySet()){
+            String name=entry.getKey();
+            IrcPlugin plugin=entry.getValue();
             if(plugin!=null){
-                IrcEventAction action = plugin.handleEvent(event);
-                if(action==IrcEventAction.STOP_PROPAGATING) return true;
-                if(action==IrcEventAction.CANCEL_EVENT) return false;
+                if(event.type==IrcEventType.PLUGIN_ENABLED && name.equals(event.sdata)) plugin.enabled=true;
+                if(plugin.enabled){
+                    IrcEventAction action = plugin.handleEvent(event);
+                    if(action==IrcEventAction.STOP_PROPAGATING || action==IrcEventAction.CANCEL_EVENT) return action;
+                }
+                if(event.type==IrcEventType.PLUGIN_DISABLED && name.equals(event.sdata)) plugin.enabled=false;
             }
         }
-        return true;
+        return IrcEventAction.CONTINUE;
+    }
+    public IrcPlugin findPlugin(String name_search){
+        for (Map.Entry<String,IrcPlugin> entry : plugins.entrySet()){
+            String name=entry.getKey();
+            if(name_search.equals(name)) return entry.getValue();
+        }
+        return null;
+    }
+   
+    /** Queue a request for a plugin to be enabled
+     * When the plugin is enabled, it will receive Events (all plugins are by default enabled)
+     * NOTE: this takes effect when the PLUGIN message is "sent" next, not immediately.
+     * @param name Name of the plugin to enable (corresponds to IrcPlugin.name)
+     */
+    public void enablePlugin(String name){
+        IrcEvent event = new IrcEvent(IrcEventType.PLUGIN_ENABLED,null,null,null);
+        event.sdata=name;
+        postEvent(event);
+    }
+    
+    /** Queue a request for a plugin to be disabled
+     * When the plugin is disabled, it will not receive Events (all plugins are by default enabled)
+     * NOTE: this takes effect when the PLUGIN message is "sent" next, not immediately.
+     * @param name Name of the plugin to disable (corresponds to IrcPlugin.name)
+     */
+    public void disablePlugin(String name){
+        IrcEvent event = new IrcEvent(IrcEventType.PLUGIN_DISABLED,null,null,null);
+        event.sdata=name;
+        postEvent(event);
+        
     }
     
     /** Add a plugin object instance to the plugins enabled for the bot.
@@ -77,14 +121,14 @@ public class IrcPluginManager  {
      */
     public void addPlugin(IrcPlugin plugin){
         plugin.initialize(bot.session,bot,this);
-        plugins.add(plugin);
+        plugins.put(plugin.name, plugin);
     }
     
     /** Search the plugins directory [relative to the bot jar/class] for plugin JARs and load+enable them
      * @return number of plugins loaded.
      * @throws URISyntaxException An error occurred while constructing the plugin directory path.
      */
-    public int loadAll() throws URISyntaxException {
+    public int loadPlugins() throws URISyntaxException {
         int total=0;
         File path = new File(IrtrusBot.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
         if(path.isFile()) path=path.getParentFile();//jar file path conditionally.
@@ -108,7 +152,7 @@ public class IrcPluginManager  {
                             Object plugInst = c.newInstance();
                             if (plugInst instanceof IrcPlugin) {
                                 IrcPlugin plug = (IrcPlugin) plugInst;
-                                plugins.add(plug);
+                                plugins.put(plug.name,plug);
                                 total++;
                             }
                         }else{

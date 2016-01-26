@@ -18,10 +18,10 @@ public class IrcEvent {
     public IrcMessage message;
     /** Indicates whether the Command/Message was incoming or outgoing, etc for COMMAND and CHAT events. */ 
     public IrcDirection direction=IrcDirection.RECEIVING;
-    /** A string field reserved for custom and internal events */ 
-    public String sreserved;
-    /** An integer field reserved for custom and internal events */ 
-    public int ireserved;
+    /** additional string data associated with the event, if any. */ 
+    public String sdata;
+    /** additional integer data associated with the event, if any. */ 
+    public int idata;
     
     /** Constructs an Event from type, state, and command information
      * Note: attempts automatic interpretation of IRC Commands to Messages if applicable.
@@ -36,6 +36,8 @@ public class IrcEvent {
         state=s;
         command=ic;
         message=null;
+        sdata="";
+        idata=0;
         if(ic!=null) try{
             message=new IrcMessage(ic);
         }catch(IrcMessageCommandException e){

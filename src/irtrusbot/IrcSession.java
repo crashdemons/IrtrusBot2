@@ -193,6 +193,15 @@ public class IrcSession {
         sendMessage(im.getReply(account, text, direct));
     }
     
+    /** Converts, and sends an IRC Command object as a PRIVMSG to the server
+     * NOTE: this function assumes 'account' to be from/origin field of the reply sent.
+     * @param ic IRC Command to send
+     * @throws IOException Error sending data.
+     */
+    public void sendCommand(IrcCommand ic) throws IOException{
+        sendRawLine(ic.toString());
+    }
+    
     private boolean isFatalNumeric(int ntype){
         //RFC2812 $5.2 "Error replies are found in the range from 400 to 599."
         return ( (ntype>=431 && ntype<=436)   //all fatal nickname errors

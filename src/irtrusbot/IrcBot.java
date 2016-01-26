@@ -39,7 +39,7 @@ public class IrcBot {
      * @throws URISyntaxException An error occurred while building the plugin directory path.
      */
     public int loadPlugins() throws URISyntaxException{
-        return manager.loadAll();
+        return manager.loadPlugins();
     }
     
     
@@ -52,7 +52,7 @@ public class IrcBot {
     public void updateState(IrcState newstate) throws Exception{
         laststate=state;
         state=newstate;
-        manager.dispatch(IrcEventType.STATE);
+        manager.postEvent(IrcEventType.STATE);
         laststate=state;
     }
     
@@ -96,7 +96,7 @@ public class IrcBot {
      * @throws Exception An error occurred while dispatching plugin messages.
      */
     public void start() throws Exception{
-        manager.dispatch(IrcEventType.BOT_START);
+        manager.postEvent(IrcEventType.BOT_START);
     }
     /** Dispatch the BOT_STOP message to plugins to indicate end of operations.
      * No Event messages should be sent/received after this.
@@ -104,81 +104,71 @@ public class IrcBot {
      * @throws Exception An error occurred while dispatching plugin messages.
      */
     public void stop() throws Exception{
-        manager.dispatch(IrcEventType.BOT_STOP);
+        manager.postEvent(IrcEventType.BOT_STOP);
     }
     
-    /** Send a PRIVMSG [chat message] in reply to a received IrcMessage
+    /** Queue sending a PRIVMSG [chat message] in reply to a received IrcMessage
      * This function also dispatches a CHAT and COMMAND (direction=SENDING) message to plugins.
      * Sending can canceled by a plugin returning the CANCEL_EVENT IrcEventAction in reply to either of these Event messages
      * @param im The IrcMessage received that it is desired to respond to.
      * @param text The message to respond with.
      * @param direct Whether the message should be sent directly to the original sender (true), or can be sent to an intermediate channel (false)
-     * @throws IOException An error occurred while sending the command to the server.
-     * @throws Exception An error occurred while sending messages to plugins
      */
-    public void sendReply(IrcMessage im, String text, boolean direct) throws IOException, Exception{
+    public void sendReply(IrcMessage im, String text, boolean direct) {
         IrcMessage imr=im.getReply(session.account, text, direct);
         sendMessage(imr);
     }
 
-    /** Send a PRIVMSG [chat message] to a specific destination
+    /** Queue sending a PRIVMSG [chat message] to a specific destination
      * This function also dispatches a CHAT and COMMAND (direction=SENDING) message to plugins.
      * Sending can canceled by a plugin returning the CANCEL_EVENT IrcEventAction in reply to either of these Event messages
      * @param to The destination, this can be a Nickname or a Channel name (must start with a hash symbol #)
      * @param text The message to send
-     * @throws IOException An error occurred while sending the command to the server.
-     * @throws Exception An error occurred while sending messages to plugins
      */
-    public void sendMessage(String to, String text) throws IOException, Exception{
+    public void sendMessage(String to, String text) {
         IrcMessage im=new IrcMessage(session.account,to,text);
         sendMessage(im);
     }
     
-    /** Send a PRIVMSG [chat message] defined by an IrcMessage object.
+    /** Queue sending a PRIVMSG [chat message] defined by an IrcMessage object.
      * This function also dispatches a CHAT and COMMAND (direction=SENDING) message to plugins
      * Sending can canceled by a plugin returning the CANCEL_EVENT IrcEventAction in reply to either of these Event messages
      * @param im The IrcMessage to send; this is formatted to "outgoing" syntax before transmitting.
-     * @throws IOException An error occurred while sending the command to the server.
-     * @throws Exception An error occurred while sending messages to plugins
      * @see IrcMessage#toOutgoing() 
      */
-    public void sendMessage(IrcMessage im) throws IOException, Exception{
+    public void sendMessage(IrcMessage im) {
         //IrcMessage im=new IrcMessage(session.account,to,text);
         IrcEvent event = new IrcEvent(IrcEventType.CHAT,laststate,state,null);
         event.message=im;
         event.direction=IrcDirection.SENDING;
-        if(!manager.dispatch(event)) return;
-        sendRaw(im.toOutgoing());
+        manager.postEvent(event);
+        sendRaw(im.toOutgoing());//queue a COMMAND message also
     }
     
-    /** Send an IRC Command defined by an IrcCommand object
+    /** Queue sending an IRC Command defined by an IrcCommand object
      * This function also dispatches a COMMAND (direction=SENDING) message to plugins
      * Sending can canceled by a plugin returning the CANCEL_EVENT IrcEventAction in reply to these Event messages
      * @param ic The IrcCommand to send.
-     * @throws IOException An error occurred while sending the command to the server.
-     * @throws Exception An error occurred while sending messages to plugins
      */
-    public void sendCommand(IrcCommand ic) throws IOException, Exception{
-        String line=ic.toString();
-        sendRaw(ic.toString());
+    public void sendCommand(IrcCommand ic) {
+        IrcEvent event = new IrcEvent(IrcEventType.COMMAND,laststate,state,ic);
+        event.direction=IrcDirection.SENDING;
+        manager.postEvent(event);
     }
     
-    /** Sends a raw IRC Command string to the server
+    /** Queue sending a raw IRC Command string to the server
      * This function also dispatches a COMMAND (direction=SENDING) message to plugins
      * Sending can canceled by a plugin returning the CANCEL_EVENT IrcEventAction in reply to these Event messages
      * @param line the raw IRC Command string to send
-     * @throws IOException An error occurred while sending the command to the server.
-     * @throws Exception An error occurred while sending messages to plugins
      */
-    public void sendRaw(String line) throws IOException, Exception{
+    public void sendRaw(String line){
         IrcCommand ic=new IrcCommand(line);
         IrcEvent event = new IrcEvent(IrcEventType.COMMAND,laststate,state,ic);
         event.direction=IrcDirection.SENDING;
-        if(!manager.dispatch(event)) return;
-        session.sendRawLine(line);
+        manager.postEvent(event);
     }
     
-    /** Perform repetitive tasks for the bot such as reading/processing received commands and handling disconnections.
+    /** Perform repetitive tasks for the bot such as sending/receiving commands and handling disconnections.
      * This function should be used in a loop until the bot state becomes QUIT
      * Commands received are passed along to process_command()
      * Multiple event messages may be dispatched depending on the level of processing a received command receives.
@@ -186,11 +176,26 @@ public class IrcBot {
      * @throws IOException A networking error occurred.
      * @throws Exception An error occurred while sending messages to plugins.
      */
-    public void tick() throws Exception{
+    public void poll() throws Exception{
+        //process any queued events
+        IrcEvent event=manager.events.poll();
+        if(event!=null){
+            IrcEventAction action = manager.sendEvent(event);
+            //send any queued IRC Commands (outgoing)
+            if(action!=IrcEventAction.CANCEL_EVENT && event.direction==IrcDirection.SENDING && event.type==IrcEventType.COMMAND){
+                session.sendCommand(event.command);
+            }
+            
+        }
+        
+        //process any waiting IRC Commands (incoming)
         if(session.isConnected()){
             IrcCommand ic=session.readCommand();
             if(ic!=null) process_command(ic);
         }else disconnect();
+        
+        
+        
     }
     
     /** Process a received IRC Command
@@ -204,7 +209,7 @@ public class IrcBot {
      */
     public void process_command(IrcCommand ic) throws IrcMessageCommandException, Exception{
         //if(ic==null) System.out.println("COMMAND NULL AT PROCESS");
-        if(!manager.dispatch(IrcEventType.COMMAND,ic)) return;
+        manager.postEvent(IrcEventType.COMMAND,ic);
         if(ic.type.equals("PRIVMSG")){
             IrcMessage im = new IrcMessage(ic);
             process_message(im);
@@ -221,7 +226,7 @@ public class IrcBot {
     public void process_message(IrcMessage im) throws Exception{
         IrcEvent event = new IrcEvent(IrcEventType.CHAT,laststate,state,null);
         event.message=im;
-        if(!manager.dispatch(event)) return;
+        manager.postEvent(event);
         //additional message processing.
     }
     
@@ -241,7 +246,7 @@ construct bot
 add plugins
 start()
 ...
-tick()
+poll()
 ...
 stop()
 exit program

@@ -9,11 +9,17 @@ package irtrusbot;
  */
 public class IrcPlugin  {
     /** The IRC session object used by the bot - Provides control over the bot connection to the plugin.  */
-    public IrcSession session;
+    public IrcSession session=null;
     /** The bot object the plugin is attached to - Provides control over specific bot operations to the plugin. */
-    public IrcBot bot;
+    public IrcBot bot=null;
     /** The Plugin Manager controlling the plugin - Provides inter-plugin communication support. */
-    IrcPluginManager manager;
+    IrcPluginManager manager=null;
+    
+    /** Whether the plugin is enabled or disabled by the Plugin Manager */
+    public boolean enabled=true;
+    
+    String name="";
+    String description="";
     
     /** A dummy method provided so that developers can set their plugin class as the "Main-Class" (entry-point) of their program without receiving errors.
      * 
