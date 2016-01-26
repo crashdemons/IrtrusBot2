@@ -18,6 +18,7 @@
             <word>Enum</word>
             <word>hostname</word>
             <word>plugin</word>
+            <word>plugins</word>
             <word>Tokenize</word>
         </spellchecker-wordlist>
     </configuration>

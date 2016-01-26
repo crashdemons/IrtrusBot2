@@ -1,14 +1,16 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package irtrusbot;
 
-/**
+/** Enumeration describing what action should be taken on a processed IrcEvent message
+ * This value is returned by plugin eventHandlers.
  *
  * @author crash
  */
 public enum IrcEventAction {
-    CONTINUE,STOP_PROPAGATING,CANCEL_EVENT
+    /** Continue propagating/dispatching the event to other plugins */
+    CONTINUE,
+    /** Stop propagating/dispatching the event to other plugins */
+    STOP_PROPAGATING,
+    /** Stop propagating/dispatching the event to other plugins and signal the Bot to cancel the operation that caused the event to be dispatched. */
+    CANCEL_EVENT
 }

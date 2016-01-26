@@ -5,10 +5,23 @@
  */
 package irtrusbot;
 
-/** Enumeration describing the current state of an IrcBot instance
+/** Enumeration describing the current state of an IrcBot instance and connection
  *
  * @author crash
  */
 public enum IrcState {
-    UNDEFINED,DISCONNECTED,CONNECTED,LOGIN_WAIT,LOGGED_IN,JOINED,QUIT
+    /** The state is unknown */
+    UNDEFINED,
+    /** The bot is currently disconnected and can be reconnected */
+    DISCONNECTED,
+    /** The bot is currently connected to an IRC Server */
+    CONNECTED,
+    /** The bot has sent login data and is waiting for a response */
+    LOGIN_WAIT,
+    /** The bot has successfully logged in and can join channels or message users */
+    LOGGED_IN,
+    /** The bot has joined a channel */
+    JOINED,
+    /** The bot failed login, received a fatal error message (or user-interaction) and has disconnected - do not reconnect automatically */
+    QUIT
 };

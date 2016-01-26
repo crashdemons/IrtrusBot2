@@ -10,5 +10,10 @@ package irtrusbot;
  * @author crash
  */
 public enum IrcLoginState {
-    WAIT,SUCCESS,FAILURE
+    /** The login process is still waiting for success/failure indications. */
+    WAIT,
+    /** The login process has succeeded. */
+    SUCCESS,
+    /** The login process has failed. */
+    FAILURE
 }

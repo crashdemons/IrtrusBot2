@@ -34,7 +34,7 @@ public class IrcSession {
     private BufferedReader reader = null;
     
     /** QUIT (if possible) and close the current IRC connection
-     * 
+     * NOTE: this function also sets all writers and sockets to null.
      * @throws IOException Error occurred while sending QUIT or closing socket.
      */
     public void disconnect() throws IOException{
@@ -84,6 +84,7 @@ public class IrcSession {
     /** Sends user information and waits for success or failure indicators (001-004 or specific error codes)
      * @see #login()
      * @throws IOException Error reading or sending data.
+     * @return the result of the login attempt, described by the IrcLoginState value. | SUCCESS: A command 001-004 was received | FAILURE: The connection is not open or a fatal error command was received.
      */
     public IrcLoginState loginwait() throws IOException{
         login();

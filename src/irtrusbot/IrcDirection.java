@@ -1,14 +1,17 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package irtrusbot;
 
-/**
+/** An Enumeration describing whether a message of interest is being sent, received, or internally simulated.
  *
  * @author crash
  */
 public enum IrcDirection {
-    UNKNOWN,SIMULATED,SENDING,RECEIVING
+    /** The direction of the message is unknown */
+    UNKNOWN,
+    /** The message is being internally simulated and was neither sent nor received. */
+    SIMULATED,
+    /** The message is being sent */
+    SENDING,
+    /** The message is being received. */
+    RECEIVING
 }

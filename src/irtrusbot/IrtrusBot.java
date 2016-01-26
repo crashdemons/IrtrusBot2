@@ -19,6 +19,7 @@ public class IrtrusBot
     {
         IrcBot bot = new IrcBot();
         
+        bot.loadPlugins();
         Plugin_AutoLogin login = new Plugin_AutoLogin();
         login.channels.add("#IrtrusBot2");
         login.channels.add("#cicada");
@@ -33,13 +34,13 @@ public class IrtrusBot
         bot.addPlugin(commands);
         bot.session.setAccountDetails("IrtrusBot2_1","IrtrusBot2","Java Hacks Bot","");//no password=""
         bot.session.setConnectionDetails("irc.freenode.net", 6667);
-        bot.start();
+        //bot.start();
         
         //Plugin_UserCommands_Command userCmd = new Plugin_UserCommands_Command("x");
         //System.out.println(userCmd.name);
         
        
-        while(bot.state!=IrcState.QUIT)
+        while(false && bot.state!=IrcState.QUIT)
             bot.tick();
         bot.stop();
     }
