@@ -35,11 +35,11 @@ public class IrcBot {
     }
     
     /** Requests that the Plugin Manager loads and adds all plugins found in the plugin directory
-     * 
+     * @return Number of plugins loaded
      * @throws URISyntaxException An error occurred while building the plugin directory path.
      */
-    public void loadPlugins() throws URISyntaxException{
-        manager.loadAll();
+    public int loadPlugins() throws URISyntaxException{
+        return manager.loadAll();
     }
     
     

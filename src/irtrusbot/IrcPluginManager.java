@@ -81,11 +81,11 @@ public class IrcPluginManager  {
     }
     
     /** Search the plugins directory [relative to the bot jar/class] for plugin JARs and load+enable them
-     * 
+     * @return number of plugins loaded.
      * @throws URISyntaxException An error occurred while constructing the plugin directory path.
      */
-    public void loadAll() throws URISyntaxException {
-        
+    public int loadAll() throws URISyntaxException {
+        int total=0;
         File path = new File(IrtrusBot.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
         if(path.isFile()) path=path.getParentFile();//jar file path conditionally.
         String pluginpath=path.toString()+File.separator+"plugins";
@@ -109,21 +109,19 @@ public class IrcPluginManager  {
                             if (plugInst instanceof IrcPlugin) {
                                 IrcPlugin plug = (IrcPlugin) plugInst;
                                 plugins.add(plug);
+                                total++;
                             }
                         }else{
                             System.out.println("   Main-Class attribute for plugin not set. Cannot load.");
                         }
-                        
-                        
-                        
-
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
-        }else{ System.out.println("plugin directory not found - skipping plugins."); }
+        }else System.out.println("plugin directory not found - skipping plugins.");
         System.out.println("loading plugins done.");
+        return total;
     }
     
 }
