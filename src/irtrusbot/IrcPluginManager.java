@@ -84,6 +84,12 @@ public class IrcPluginManager  {
         }
         return IrcEventAction.CONTINUE;
     }
+    
+    /** Find a plugin object instance by the plugin name
+     * This only searches loaded plugins.
+     * @param name_search The plugin name to check for.
+     * @return The instance of the matching plugin is returned, otherwise 'null' is returned for no match.
+     */
     public IrcPlugin findPlugin(String name_search){
         for (Map.Entry<String,IrcPlugin> entry : plugins.entrySet()){
             String name=entry.getKey();
