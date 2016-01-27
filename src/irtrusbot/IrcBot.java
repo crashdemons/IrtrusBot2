@@ -90,21 +90,21 @@ public class IrcBot {
         updateState(IrcState.QUIT);
     }
     
-    /** Dispatch the BOT_START message to plugins to indicate beginning of operations.
-     * No Event messages should be sent/received before this.
+    /** Queue the BOT_START message to plugins to indicate beginning of operations.
+     * No Event messages should be sent/received before this event
      * This method should be used after: loading plugins, configuring  - but before: connecting, ticking, quitting
-     * @throws Exception An error occurred while dispatching plugin messages.
      */
-    public void start() throws Exception{
+    public void start(){
         manager.postEvent(IrcEventType.BOT_START);
     }
     /** Dispatch the BOT_STOP message to plugins to indicate end of operations.
      * No Event messages should be sent/received after this.
+     * NOTE: this message is sent synchronously. All plugin handling must finish before continuing.
      * This method should be used before the bot instance is released.
      * @throws Exception An error occurred while dispatching plugin messages.
      */
     public void stop() throws Exception{
-        manager.postEvent(IrcEventType.BOT_STOP);
+        manager.sendEvent(new IrcEvent(IrcEventType.BOT_STOP,laststate,state,null));//force synchronous/immediate sending of 
     }
     
     /** Queue sending a PRIVMSG [chat message] in reply to a received IrcMessage
