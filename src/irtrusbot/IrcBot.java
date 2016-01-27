@@ -50,6 +50,7 @@ public class IrcBot {
      * @throws Exception An error occurred while dispatching messages to plugins.
      */
     public void updateState(IrcState newstate) throws Exception{
+        if(laststate==newstate && state==newstate) return;
         laststate=state;
         state=newstate;
         manager.postEvent(IrcEventType.STATE);
