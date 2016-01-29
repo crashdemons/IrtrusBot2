@@ -9,10 +9,9 @@ import java.io.File;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
-import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -20,10 +19,12 @@ import java.util.jar.JarFile;
  *
  * @author crash
  */
-public class IrcPluginManager  {
+public class IrcPluginManager {
+    
+    
     private IrcBot bot=null;
-    private Map<String,IrcPlugin> plugins=new HashMap<String,IrcPlugin>();
-    Queue<IrcEvent> events = new LinkedList<IrcEvent>();
+    private ConcurrentHashMap<String,IrcPlugin> plugins=new ConcurrentHashMap<String,IrcPlugin>();
+    ConcurrentLinkedQueue<IrcEvent> events = new ConcurrentLinkedQueue<IrcEvent>();
     
     /** Construct the class and include an instance of the Bot constructing it
      * 
@@ -64,6 +65,7 @@ public class IrcPluginManager  {
     /** Synchronously processes an IrcEvent object against plugins
      * This method should generally not be used by plugins if it can be avoided. Prefer postEvent() instead.
      * PLUGIN event messages will cause the plugin to be enabled or disabled within the time of this function call.
+     * [WARNING: This should NOT be called by a plugin or thread]
      * @param event Event to be processed
      * @return The event action indicated by plugin(s). CANCEL_EVENT implies higher post-processing (such as data transmission actions) should be canceled.
      * @throws Exception An error occurred within a plugin event handler.
@@ -76,7 +78,7 @@ public class IrcPluginManager  {
             if(plugin!=null){
                 if(event.type==IrcEventType.PLUGIN_ENABLED && name.equals(event.sdata)) plugin.enabled=true;
                 if(plugin.enabled){
-                    IrcEventAction action = plugin.handleEvent(event);
+                    IrcEventAction action = plugin.startHandler(event,5);//5 secs, we can make this configurable.
                     if(action==IrcEventAction.STOP_PROPAGATING || action==IrcEventAction.CANCEL_EVENT) return action;
                 }
                 if(event.type==IrcEventType.PLUGIN_DISABLED && name.equals(event.sdata)) plugin.enabled=false;
@@ -84,6 +86,8 @@ public class IrcPluginManager  {
         }
         return IrcEventAction.CONTINUE;
     }
+    
+    
     
     /** Find a plugin object instance by the plugin name
      * This only searches loaded plugins.

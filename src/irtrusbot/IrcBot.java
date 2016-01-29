@@ -4,14 +4,15 @@ package irtrusbot;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.List;
 
 /** Class implementing the skeleton of controllable IRC bot or client with plugin support.
  *
  * @author crash
  */
 public class IrcBot {
+    /** Plugin Manager object used for controlling plugins and dispatching event messages
+     * 
+     */
     private IrcPluginManager manager = new IrcPluginManager(this);
     /** Session object used for controlling the IRC connection
      * 
@@ -178,6 +179,8 @@ public class IrcBot {
      * @throws Exception An error occurred while sending messages to plugins.
      */
     public void poll() throws Exception{
+        
+        
         //process any queued events
         IrcEvent event=manager.events.poll();
         if(event!=null){
