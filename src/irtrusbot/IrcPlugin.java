@@ -86,7 +86,8 @@ public class IrcPlugin extends Thread {
      * Method used by PluginManager to start and time-limit plugin handling inside a thread
      * @param event the event to be handled by the plugin
      * @param max_seconds the maximum number of seconds the thread is allowed to run
-     * @return 
+     * @return an action value specifying how the PluginManager and Bot should continue (see handleEvent
+     * @see IrcPlugin#handleEvent(irtrusbot.IrcEvent)
      */
     public final IrcEventAction startHandler(IrcEvent event, int max_seconds){
         //set conditions for handler
