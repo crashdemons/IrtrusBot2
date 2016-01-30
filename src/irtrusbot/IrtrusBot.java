@@ -1,4 +1,5 @@
 package irtrusbot;
+import java.util.Map;
 import java.util.Random;
 
 /** Main bot class, used to load the Bot, plugins, and run the poll loop.

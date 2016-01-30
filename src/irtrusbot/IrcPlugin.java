@@ -13,17 +13,41 @@ public class IrcPlugin extends Thread {
     /** The bot object the plugin is attached to - Provides control over specific bot operations to the plugin. */
     public IrcBot bot=null;
     /** The Plugin Manager controlling the plugin - Provides inter-plugin communication support. */
-    IrcPluginManager manager=null;
+    private IrcPluginManager manager=null;
+    
+    
+    
+    
+    /** The priority level of the plugin
+     *  This value determines the order in which the plugin receives event, and thus can filter events from being broadcast to other plugins.
+     *  The default value of this property is DEFAULT which receives filtered preprocessed events.
+     *  NOTE: plugins added with the same priority will be adjusted in priority value to maintain the order in which they were loaded.
+     * @see IrcPluginPriority
+     */
+    public int priority=IrcPluginPriority.DEFAULT;
+    
     
     /** Whether the plugin is enabled or disabled by the Plugin Manager */
     public boolean enabled=true;
     
+    /** 
+     * Name of the plugin - This should be set in subclasses by the constructor.
+     * Generally it is suggested to use an easy to type name as this is used with IrcPluginManager.findPlugin(name)
+     * @see IrcPluginManager#findPlugin(java.lang.String)
+     */
     public String name="";
+    /**
+     * Version string of the plugin - unused
+     */
     public String version="";
+    /**
+     * Description string of the plugin - unused
+     */
     public String description="";
     
-    IrcEvent currentEvent=null;
-    IrcEventAction lastAction=null;
+    //event parameter information the threaded handler call used in startHandler & run
+    private IrcEvent currentEvent=null;
+    private IrcEventAction lastAction=null;
     
     /** A dummy method provided so that developers can set their plugin class as the "Main-Class" (entry-point) of their program without receiving errors.
      * 
@@ -58,15 +82,23 @@ public class IrcPlugin extends Thread {
     //wrapper to call the threaded version of the event handler.
     //basically, we store parameters into properties, invoke the thread, which passes the properties as arguments.
     //then we wait a set time before killing the thread.
-    public IrcEventAction startHandler(IrcEvent event, int max_seconds){
+    /**
+     * Method used by PluginManager to start and time-limit plugin handling inside a thread
+     * @param event the event to be handled by the plugin
+     * @param max_seconds the maximum number of seconds the thread is allowed to run
+     * @return 
+     */
+    public final IrcEventAction startHandler(IrcEvent event, int max_seconds){
         //set conditions for handler
         currentEvent=event;
         //set the default action
         lastAction=IrcEventAction.CONTINUE;
         start();
         try{
+            //wait for N seconds before continuing this thread
             join(max_seconds*1000);
             if(this.isAlive()){
+                //if the thread is not dead, kill it.
                 interrupt();
                 System.out.println("Plugin timeout exceeded for "+name+" - killing thread.");
             }
@@ -80,8 +112,11 @@ public class IrcPlugin extends Thread {
     
     //code for the new thread,
     //take our preset arguments from outside the thread (currentEvent, lastAction) and use them.
+    /**
+     * Method used to start plugin event handling code in a controllable Thread
+     */
     @Override
-    public void run(){
+    public final void run(){
         try{
             lastAction=handleEvent(currentEvent);
         }catch(Exception e){
@@ -90,6 +125,52 @@ public class IrcPlugin extends Thread {
         }
     }
     
+    /** Post an event to all other loaded plugins in the attached Plugin Manager, if any.
+     * @param event Event to post.
+     */
+    public void postEvent(IrcEvent event){
+        if(manager!=null){
+            manager.postEvent(event);
+        }
+    }
+    
+    /** Post an event to all other loaded plugins
+     * NOTE: this method changes the priority levels of the event to be all-inclusive.
+     * @param event Event to post.
+     */
+    public void postEventAll(IrcEvent event){
+        if(manager!=null){
+            event.priority_min=IrcPluginPriority.MIN;
+            event.priority_min=IrcPluginPriority.MAX;
+            manager.postEvent(event);
+        }
+    }
+    
+    /** Post an event to all other loaded plugins with the next priority number (may be in the same level)
+     * NOTE: this method changes the priority levels of the event to include all values in the range [current+1,max], including only plugins that would normally receive messages after the current plugin.
+     * @param event Event to post.
+     */
+    public void postEventNext(IrcEvent event){
+        if(manager!=null){
+            event.priority_min=priority+1;
+            event.priority_min=IrcPluginPriority.MAX;
+            manager.postEvent(event);
+        }
+    }
+    
+    /** Post an event to be handled by the bot rather than plugins.
+     * By default, events are usually handled by the bot (such as outgoing IRC commands) after plugins are allowed to process them.
+     * This method allows sending an event that will bypass most plugins.
+     * NOTE: this method changes the priority levels of the event to the range [BOT,BOT], excluding all plugins.
+     * @param event Event to post.
+     */
+    public void postEventBot(IrcEvent event){
+        if(manager!=null){
+            event.priority_min=IrcPluginPriority.BOT;
+            event.priority_min=IrcPluginPriority.BOT;
+            manager.postEvent(event);
+        }
+    }
     
     
 }

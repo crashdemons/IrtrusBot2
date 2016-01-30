@@ -23,6 +23,23 @@ public class IrcEvent {
     /** additional integer data associated with the event, if any. */ 
     public int idata;
     
+    /** Smallest (in value) priority level plugin this event can be dispatched to.
+     * <br>
+     * For example: If you want an event to only be dispatched to RAW and FILTER plugins, you would set
+     * priority_min=IrcPluginPriority.RAW and priority_max=IrcPluginPriority.getLastElementInLevel(IrcPluginPriority.FILTER)  (or IrcPluginPriority.FILTER+IrcPluginPriority.LEVEL_ELEMENTS-1)
+     
+     */
+    public int priority_min=IrcPluginPriority.MIN;
+    /** Largest (in value) priority level plugin this event can be dispatched to.
+     * <br>
+     * NOTE: This is the maximum priority level number.  If you choose a specific level value, then you will include only the plugin with that exact level number, not all plugins in the priority level.
+     * <br>
+     * For example: If you want an event to only be dispatched to RAW and FILTER plugins, you would set
+     * priority_min=IrcPluginPriority.RAW and priority_max=IrcPluginPriority.getLastElementInLevel(IrcPluginPriority.FILTER)  (or IrcPluginPriority.FILTER+IrcPluginPriority.LEVEL_ELEMENTS-1)
+     
+     */
+    public int priority_max=IrcPluginPriority.MAX;
+    
     /** Constructs an Event from type, state, and command information
      * Note: attempts automatic interpretation of IRC Commands to Messages if applicable.
      * @param t The type of the event being dispatched.

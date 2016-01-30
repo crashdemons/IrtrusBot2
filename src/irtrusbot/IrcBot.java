@@ -13,7 +13,7 @@ public class IrcBot {
     /** Plugin Manager object used for controlling plugins and dispatching event messages
      * 
      */
-    private IrcPluginManager manager = new IrcPluginManager(this);
+    public IrcPluginManager manager = new IrcPluginManager(this);
     /** Session object used for controlling the IRC connection
      * 
      */

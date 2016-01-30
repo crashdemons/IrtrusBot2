@@ -12,6 +12,7 @@ import java.net.URLClassLoader;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -24,6 +25,7 @@ public class IrcPluginManager {
     
     private IrcBot bot=null;
     private ConcurrentHashMap<String,IrcPlugin> plugins=new ConcurrentHashMap<String,IrcPlugin>();
+    private ConcurrentSkipListMap<Integer,IrcPlugin> plugins_priority=new ConcurrentSkipListMap<Integer,IrcPlugin>();
     ConcurrentLinkedQueue<IrcEvent> events = new ConcurrentLinkedQueue<IrcEvent>();
     
     /** Construct the class and include an instance of the Bot constructing it
@@ -72,10 +74,12 @@ public class IrcPluginManager {
      * @see #postEvent(IrcEvent)
      */
     public IrcEventAction sendEvent(IrcEvent event)  throws Exception {
-        for (Map.Entry<String,IrcPlugin> entry : plugins.entrySet()){
-            String name=entry.getKey();
+        for (Map.Entry<Integer,IrcPlugin> entry : plugins_priority.entrySet()){
+            Integer priority=entry.getKey();
+            if(priority<event.priority_min || priority>event.priority_max) continue;//do not send events to plugins not in the correct priority range.
             IrcPlugin plugin=entry.getValue();
             if(plugin!=null){
+                String name=plugin.name;
                 if(event.type==IrcEventType.PLUGIN_ENABLED && name.equals(event.sdata)) plugin.enabled=true;
                 if(plugin.enabled){
                     IrcEventAction action = plugin.startHandler(event,5);//5 secs, we can make this configurable.
@@ -89,10 +93,12 @@ public class IrcPluginManager {
     
     
     
-    /** Find a plugin object instance by the plugin name
-     * This only searches loaded plugins.
-     * @param name_search The plugin name to check for.
-     * @return The instance of the matching plugin is returned, otherwise 'null' is returned for no match.
+    /** 
+     Find a plugin object instance by the plugin name
+     
+     This only searches loaded plugins.
+     @param name_search The plugin name to check for.
+     @return The instance of the matching plugin is returned, otherwise 'null' is returned for no match.
      */
     public IrcPlugin findPlugin(String name_search){
         for (Map.Entry<String,IrcPlugin> entry : plugins.entrySet()){
@@ -132,6 +138,12 @@ public class IrcPluginManager {
     public void addPlugin(IrcPlugin plugin){
         plugin.initialize(bot.session,bot,this);
         plugins.put(plugin.name, plugin);
+        
+        if(plugin.priority<IrcPluginPriority.PLUGIN_MIN) plugin.priority=IrcPluginPriority.PLUGIN_MIN;
+        if(plugin.priority>IrcPluginPriority.PLUGIN_MAX) plugin.priority=IrcPluginPriority.PLUGIN_MAX;
+        
+        while(plugins_priority.get(plugin.priority)!=null) plugin.priority++;
+        plugins_priority.put(plugin.priority,plugin);
     }
     
     /** Search the plugins directory [relative to the bot jar/class] for plugin JARs and load+enable them

@@ -6,6 +6,10 @@ package irtrusbot;
  */
 @SuppressWarnings("serial")
 public class IrcMessageCommandException extends Exception{
-  public IrcMessageCommandException(String message){ super(message); }
-  
+    
+    /**
+     * Constructs a new exception with the specified detail message.
+     * @param message the detail message to use
+     */
+    public IrcMessageCommandException(String message){ super(message); }
 }
