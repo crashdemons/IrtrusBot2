@@ -174,7 +174,7 @@ public class IrcPluginManager {
                             Object plugInst = c.newInstance();
                             if (plugInst instanceof IrcPlugin) {
                                 IrcPlugin plug = (IrcPlugin) plugInst;
-                                plugins.put(plug.name,plug);
+                                addPlugin(plug);
                                 total++;
                             }
                         }else{
