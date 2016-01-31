@@ -6,10 +6,15 @@
 package irtrusbot;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -21,19 +26,33 @@ import java.util.jar.JarFile;
  * @author crash
  */
 public class IrcPluginManager {
-    
-    
     private IrcBot bot=null;
     private ConcurrentHashMap<String,IrcPlugin> plugins=new ConcurrentHashMap<String,IrcPlugin>();
     private ConcurrentSkipListMap<Integer,IrcPlugin> plugins_priority=new ConcurrentSkipListMap<Integer,IrcPlugin>();
     ConcurrentLinkedQueue<IrcEvent> events = new ConcurrentLinkedQueue<IrcEvent>();
     
+    /** Directory of the application binary running */
+    public String binaryDirectory="";
+    /** Directory of the plugin jars */
+    public String pluginDirectory="";
+    /** Directory of configuration files */
+    public String configDirectory="";
+    
+    
     /** Construct the class and include an instance of the Bot constructing it
      * 
      * @param b The Bot object owning the plugins.
+     * @throws URISyntaxException error processing application path.
      */
-    public IrcPluginManager(IrcBot b){
+    public IrcPluginManager(IrcBot b) throws URISyntaxException {
         bot=b;
+        
+        File path = new File(IrtrusBot.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+        if(path.isFile()) path=path.getParentFile();//jar file path conditionally.
+        binaryDirectory=path.toString();
+        pluginDirectory=binaryDirectory+File.separator+"plugins";
+        configDirectory=binaryDirectory+File.separator+"config";
+        
     }
     
     /** Queues a blank IrcEvent message for processing with only the Type specified.
@@ -136,15 +155,63 @@ public class IrcPluginManager {
      * @param plugin The plugin object to communicate with.
      */
     public void addPlugin(IrcPlugin plugin){
-        plugin.initialize(bot.session,bot,this);
-        plugins.put(plugin.name, plugin);
-        
+        //correct any plugin parameters that need fixing.
+        plugin.name=plugin.name.replaceAll("\\W+", "_");
         if(plugin.priority<IrcPluginPriority.PLUGIN_MIN) plugin.priority=IrcPluginPriority.PLUGIN_MIN;
         if(plugin.priority>IrcPluginPriority.PLUGIN_MAX) plugin.priority=IrcPluginPriority.PLUGIN_MAX;
-        
         while(plugins_priority.get(plugin.priority)!=null) plugin.priority++;
+        //initialize object instances for the bot to use.
+        plugin.initialize(bot.session,bot,this);
+        //add the plugin to the plugin collections.
         plugins_priority.put(plugin.priority,plugin);
+        plugins.put(plugin.name, plugin);
     }
+    
+    /**
+     * Retrieves properties for a specified plugin name
+     * @param name name of the plugin
+     * @return properties object
+     */
+    public Properties loadPluginProperties(String name){
+        File configFile = new File(configDirectory+File.separator+name+".properties");
+        try {
+            FileReader reader = new FileReader(configFile);
+            Properties props = new Properties();
+            props.load(reader);
+            reader.close();
+            return props;
+
+            //String host = props.getProperty("host");
+
+            //System.out.print("Host name is: " + host);
+        } catch (FileNotFoundException ex) {
+            return null;
+            // file does not exist
+        } catch (IOException ex) {
+            return null;
+            // I/O error
+        }
+    }
+    
+    
+    /**
+     * Saves properties for a specified plugin name
+     * @param name name of the plugin
+     * @param props Property object to save
+     */
+    public void savePluginProperties(String name,Properties props){
+        File configFile = new File("config.properties");
+        try {
+            FileWriter writer = new FileWriter(configFile);
+            props.store(writer,"Configuration properties for plugin "+name);
+            writer.close();
+        } catch (FileNotFoundException ex) {
+            // file does not exist
+        } catch (IOException ex) {
+            // I/O error
+        }
+    }
+    
     
     /** Search the plugins directory [relative to the bot jar/class] for plugin JARs and load+enable them
      * @return number of plugins loaded.
@@ -152,11 +219,8 @@ public class IrcPluginManager {
      */
     public int loadPlugins() throws URISyntaxException {
         int total=0;
-        File path = new File(IrtrusBot.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-        if(path.isFile()) path=path.getParentFile();//jar file path conditionally.
-        String pluginpath=path.toString()+File.separator+"plugins";
-        System.out.println("loading plugins: "+pluginpath);
-        File plugDir = new File(pluginpath);
+        System.out.println("loading plugins: "+pluginDirectory);
+        File plugDir = new File(pluginDirectory);
         if (plugDir.exists() && plugDir.isDirectory()) {
             for (File plugFile : plugDir.listFiles()) {
                 if (plugFile.exists() && plugFile.isFile() && plugFile.getName().endsWith(".jar")) {

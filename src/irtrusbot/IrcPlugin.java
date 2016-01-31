@@ -1,6 +1,8 @@
 
 package irtrusbot;
 
+import java.util.Properties;
+
 /** Skeleton/parent class for all IrcBot plugins
  * If you are writing your own plugin, your plugin class should extend IrcPlugin and provide an override of the handleEvent() method.
  * Developers should make their plugin class the "Main-Class" of their project (entry-point).
@@ -18,21 +20,29 @@ public class IrcPlugin extends Thread {
     
     
     
-    /** The priority level of the plugin
-     *  This value determines the order in which the plugin receives event, and thus can filter events from being broadcast to other plugins.
-     *  The default value of this property is DEFAULT which receives filtered preprocessed events.
+    /** 
+     * The priority level of the plugin
+     *  This value determines the order in which the plugin receives event, and thus can filter events from being broadcast to other plugins
+     *  The default value of this property is DEFAULT which receives filtered preprocessed events
      *  NOTE: plugins added with the same priority will be adjusted in priority value to maintain the order in which they were loaded.
      * @see IrcPluginPriority
      */
     public int priority=IrcPluginPriority.DEFAULT;
+    
+    /**
+     * Properties for the plugin [retrieved from configDirectory/pluginname.properties]
+     * If properties are not available, this will be null
+     */
+    public Properties config=null;
     
     
     /** Whether the plugin is enabled or disabled by the Plugin Manager */
     public boolean enabled=true;
     
     /** 
-     * Name of the plugin - This should be set in subclasses by the constructor.
-     * Generally it is suggested to use an easy to type name as this is used with IrcPluginManager.findPlugin(name)
+     * Name of the plugin - This should be set in subclasses by the constructor
+     * Generally it is suggested to use an easy to type name as this is used with IrcPluginManagerfindPlugin(name) 
+     * NOTE: any Non-"word" characters [A-Za-z0-9_] will be replaced by _ during plugin initialization.
      * @see IrcPluginManager#findPlugin(java.lang.String)
      */
     public String name="";
@@ -65,6 +75,7 @@ public class IrcPlugin extends Thread {
         session=sess;
         bot=b;
         manager=disp;
+        loadConfig();
     }
     
     /** IrcEvent message handler.
@@ -170,6 +181,27 @@ public class IrcPlugin extends Thread {
             event.priority_min=IrcPluginPriority.BOT;
             event.priority_min=IrcPluginPriority.BOT;
             manager.postEvent(event);
+        }
+    }
+    
+    /**
+     * Loads configuration options for this plugin into 'config' from the config file - 
+     * If no properties were previously saved, this will create a blank properties object
+     */
+    public void loadConfig(){
+        if(manager!=null){
+            config=manager.loadPluginProperties(name);
+            if(config==null) config=new Properties();
+        }
+    }
+    
+    /**
+     * Saves configuration options for this plugin from 'config' to the config file -
+     * If no 'config' is unset (loadConfig never called), this method will not attempt to save anything
+     */
+    public void saveConfig(){
+        if(manager!=null && config!=null){
+            manager.savePluginProperties(name,config);
         }
     }
     
