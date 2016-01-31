@@ -13,7 +13,7 @@ public class IrcBot {
     /** Plugin Manager object used for controlling plugins and dispatching event messages
      * 
      */
-    public IrcPluginManager manager = new IrcPluginManager(this);
+    public IrcPluginManager manager;
     /** Session object used for controlling the IRC connection
      * 
      */
@@ -237,7 +237,8 @@ public class IrcBot {
     /** Constructs the object and sets any important instance information in contained objects.
      * 
      */
-    public IrcBot(){
+    public IrcBot() throws URISyntaxException {
+         manager = new IrcPluginManager(this);
         //manager.bot=this;
     }
 }
