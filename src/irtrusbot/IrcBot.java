@@ -1,4 +1,3 @@
-
 package irtrusbot;
 
 import java.io.IOException;
