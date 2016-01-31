@@ -130,10 +130,15 @@ public class IrcSession {
      */
     public String readRawLine() throws IOException{
         if(!isConnected()) return null;
-        String line=reader.readLine();
+        String line="";
+        if(reader.ready()){
+            line=reader.readLine();
+        }
         if(line==null) throw new IOException("null");
-        received++;
-        System.out.println("< "+line);
+        if(line.length()>0){
+            System.out.println("< "+line);
+            received++;
+        }
         return line;
     }
     
@@ -206,7 +211,9 @@ public class IrcSession {
         return ( (ntype>=431 && ntype<=436)   //all fatal nickname errors
                ||(ntype>=451 && ntype<=465) );//notregistered, needmoreparams, ... passwordmismatch, banned, etc.
     }
-    private boolean isFatalCommand(IrcCommand ic){
+    
+    //RFC2812 $3.7.4 "The ERROR message is also used before terminating a client connection."
+    public boolean isFatalCommand(IrcCommand ic){
         return ( isFatalNumeric(ic.ntype) || ic.type.equals("ERROR") );
     }
     
@@ -217,10 +224,9 @@ public class IrcSession {
      */
     public IrcCommand readCommand() throws IOException{
         String line = readRawLine();
-        if(line==null) return null;
+        if(line==null || line.length()==0) return null;
         IrcCommand ic = new IrcCommand(line);
-        //RFC2812 $3.7.4 "The ERROR message is also used before terminating a client connection."
-        if(isFatalCommand(ic)) disconnect();
+        //if(isFatalCommand(ic)) disconnect();
         //debugObject(ic);
         return ic;
     }

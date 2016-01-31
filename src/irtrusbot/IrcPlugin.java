@@ -103,7 +103,7 @@ public class IrcPlugin {
     public final IrcEventAction startHandler(IrcEvent event, int max_seconds){
         //set conditions for handler
         IrcPluginThread thread = new IrcPluginThread(this,event);
-        System.out.println("Starting thread{");
+        //System.out.println("Starting thread{");
         thread.start();
         try{
             //wait for N seconds before continuing this thread

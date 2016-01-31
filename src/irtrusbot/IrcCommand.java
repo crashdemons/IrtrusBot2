@@ -121,10 +121,12 @@ public class IrcCommand {
     private String getParamString(){
         String s="";
         boolean first=true;
-        for(String param : parameters){
+        int last=parameters.size()-1;
+        for (int i = 0; i <= last; i++) {
+            String param=parameters.get(i);
             if(!first) s+=" ";
             first=false;
-            if(param.indexOf(' ')!=-1) s+=":";
+            if(param.indexOf(' ')!=-1 || i==last) s+=":";
             s+=param;
         }
         return s;
