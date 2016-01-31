@@ -198,7 +198,7 @@ public class IrcSession {
      * @throws IOException Error sending data.
      */
     public void sendCommand(IrcCommand ic) throws IOException{
-        sendRawLine(ic.toString());
+        sendRawLine(ic.toOutgoing());
     }
     
     private boolean isFatalNumeric(int ntype){

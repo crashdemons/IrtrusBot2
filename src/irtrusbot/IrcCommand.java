@@ -116,4 +116,41 @@ public class IrcCommand {
      * @param s IRC Command string
      */
     public IrcCommand(String s){ interpret(s);}
+    
+    
+    private String getParamString(){
+        String s="";
+        boolean first=true;
+        for(String param : parameters){
+            if(!first) s+=" ";
+            first=false;
+            if(param.indexOf(' ')!=-1) s+=":";
+            s+=param;
+        }
+        return s;
+    }
+    
+    
+        /** Convert an IRC Message into the server-sent (incoming) string format.
+     * This conversion is useful for determining the maximum message length, as both the incoming and outgoing commands must be under 512 chars.
+    * @return Incoming-formatted string representation of the IRC Message command eg. {@code :nick!user@host PRIVMSG to :text}.
+     */
+    public String toIncoming() {
+        return ":" + origin.toString() + " "+type+" " + getParamString();
+    }
+
+    /** Convert an IRC Message into the client-sent (outgoing) string format.
+     * This conversion is used to prepare messages to be sent an IRC server.
+     * @return Outgoing-formatted string representation of the IRC Message command eg. {@code PRIVMSG to :text}.
+     */
+    public String toOutgoing() {
+        return type+" " + getParamString();
+    }
+    
+    @Override
+    public String toString() {
+        if(hasOrigin) return toIncoming();
+        return toOutgoing();
+    }
+    
 }
