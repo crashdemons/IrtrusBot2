@@ -173,7 +173,8 @@ public class IrcPluginManager {
      * @return properties object
      */
     public Properties loadPluginProperties(String name){
-        File configFile = new File(configDirectory+File.separator+name+".properties");
+        String filename=configDirectory+File.separator+name+".properties";
+        File configFile = new File(filename);
         try {
             FileReader reader = new FileReader(configFile);
             Properties props = new Properties();
@@ -185,9 +186,11 @@ public class IrcPluginManager {
 
             //System.out.print("Host name is: " + host);
         } catch (FileNotFoundException ex) {
+            System.out.println("Config file missing: "+filename+" - Ignoring.");
             return null;
             // file does not exist
         } catch (IOException ex) {
+            System.out.println("Config file failed to read: "+filename+" - Ignoring.");
             return null;
             // I/O error
         }
@@ -200,14 +203,21 @@ public class IrcPluginManager {
      * @param props Property object to save
      */
     public void savePluginProperties(String name,Properties props){
-        File configFile = new File("config.properties");
+        String filename=configDirectory+File.separator+name+".properties";
+        File configFile = new File(filename);
         try {
+            if(!configFile.exists()) {
+                System.out.println("Config file missing: "+filename+" - Creating new one.");
+                configFile.createNewFile();
+            }
             FileWriter writer = new FileWriter(configFile);
             props.store(writer,"Configuration properties for plugin "+name);
             writer.close();
         } catch (FileNotFoundException ex) {
+            System.out.println("Config file missing: "+filename+" - Error.");
             // file does not exist
         } catch (IOException ex) {
+            System.out.println("Config file failed to create or write: "+filename+" - Error");
             // I/O error
         }
     }
