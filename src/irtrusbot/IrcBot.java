@@ -234,7 +234,7 @@ public class IrcBot {
     }
     
     /** Constructs the object and sets any important instance information in contained objects.
-     * 
+     * @throws URISyntaxException error building path information for plugin manager
      */
     public IrcBot() throws URISyntaxException {
          manager = new IrcPluginManager(this);

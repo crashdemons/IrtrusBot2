@@ -175,10 +175,10 @@ public class IrcPluginManager {
      */
     public Properties loadPluginProperties(String name,Properties defaults){
         String filename=configDirectory+File.separator+name+".properties";
+        Properties props = new Properties(defaults);
         File configFile = new File(filename);
         try {
             FileReader reader = new FileReader(configFile);
-            Properties props = new Properties(defaults);
             props.load(reader);
             reader.close();
             return props;
@@ -188,11 +188,11 @@ public class IrcPluginManager {
             //System.out.print("Host name is: " + host);
         } catch (FileNotFoundException ex) {
             System.out.println("Config file missing: "+filename+" - Ignoring.");
-            return null;
+            return props;
             // file does not exist
         } catch (IOException ex) {
             System.out.println("Config file failed to read: "+filename+" - Ignoring.");
-            return null;
+            return props;
             // I/O error
         }
     }
