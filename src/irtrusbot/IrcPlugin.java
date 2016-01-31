@@ -9,7 +9,7 @@ import java.util.Properties;
  *
  * @author crash
  */
-public class IrcPlugin extends Thread {
+public class IrcPlugin {
     /** The IRC session object used by the bot - Provides control over the bot connection to the plugin.  */
     public IrcSession session=null;
     /** The bot object the plugin is attached to - Provides control over specific bot operations to the plugin. */
@@ -58,9 +58,6 @@ public class IrcPlugin extends Thread {
      */
     public String description="";
     
-    //event parameter information the threaded handler call used in startHandler & run
-    private IrcEvent currentEvent=null;
-    private IrcEventAction lastAction=null;
     
     /** A dummy method provided so that developers can set their plugin class as the "Main-Class" (entry-point) of their program without receiving errors.
      * 
@@ -105,16 +102,15 @@ public class IrcPlugin extends Thread {
      */
     public final IrcEventAction startHandler(IrcEvent event, int max_seconds){
         //set conditions for handler
-        currentEvent=event;
-        //set the default action
-        lastAction=IrcEventAction.CONTINUE;
-        start();
+        IrcPluginThread thread = new IrcPluginThread(this,event);
+        System.out.println("Starting thread{");
+        thread.start();
         try{
             //wait for N seconds before continuing this thread
-            join(max_seconds*1000);
-            if(this.isAlive()){
+            thread.join(max_seconds*1000);
+            if(thread.isAlive()){
                 //if the thread is not dead, kill it.
-                interrupt();
+                thread.interrupt();
                 System.out.println("Plugin timeout exceeded for "+name+" - killing thread.");
             }
         }catch(SecurityException e){
@@ -122,23 +118,10 @@ public class IrcPlugin extends Thread {
         }catch(Exception e){
             //we don't really want to handle an exception, but we cant let plugin thread interruptions kill the program.
         }
-        return lastAction;
+        return thread.getAction();
     }
     
-    //code for the new thread,
-    //take our preset arguments from outside the thread (currentEvent, lastAction) and use them.
-    /**
-     * Method used to start plugin event handling code in a controllable Thread
-     */
-    @Override
-    public final void run(){
-        try{
-            lastAction=handleEvent(currentEvent);
-        }catch(Exception e){
-            //we don't care what exception an arbitrary plugin generated, frankly.
-            //maybe we could implement logging here.
-        }
-    }
+
     
     /** Post an event to all other loaded plugins in the attached Plugin Manager, if any.
      * @param event Event to post.
