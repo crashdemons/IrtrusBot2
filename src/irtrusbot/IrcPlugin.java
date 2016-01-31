@@ -31,9 +31,12 @@ public class IrcPlugin extends Thread {
     
     /**
      * Properties for the plugin [retrieved from configDirectory/pluginname.properties]
-     * If properties are not available, this will be null
      */
-    public Properties config=null;
+    public Properties config=new Properties();
+    /**
+     * Default properties set by the plugin at Construction time which can be overridden by the config file.
+     */
+    public Properties defaults=new Properties();
     
     
     /** Whether the plugin is enabled or disabled by the Plugin Manager */
@@ -190,7 +193,7 @@ public class IrcPlugin extends Thread {
      */
     public void loadConfig(){
         if(manager!=null){
-            config=manager.loadPluginProperties(name);
+            config=manager.loadPluginProperties(name,defaults);
             if(config==null) config=new Properties();
         }
     }

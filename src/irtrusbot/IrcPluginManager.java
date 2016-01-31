@@ -170,14 +170,15 @@ public class IrcPluginManager {
     /**
      * Retrieves properties for a specified plugin name
      * @param name name of the plugin
+     * @param defaults default properties for the plugin (overridden by file properties)
      * @return properties object
      */
-    public Properties loadPluginProperties(String name){
+    public Properties loadPluginProperties(String name,Properties defaults){
         String filename=configDirectory+File.separator+name+".properties";
         File configFile = new File(filename);
         try {
             FileReader reader = new FileReader(configFile);
-            Properties props = new Properties();
+            Properties props = new Properties(defaults);
             props.load(reader);
             reader.close();
             return props;
