@@ -17,7 +17,6 @@ public class IrcSession {
     String rname="";
     String pass="";
     
-    //public boolean doIdentify=false;
     
     
     /** IRC Server being connected to*/
