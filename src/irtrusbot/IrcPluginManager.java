@@ -234,7 +234,7 @@ public class IrcPluginManager {
         File plugDir = new File(pluginDirectory);
         if (plugDir.exists() && plugDir.isDirectory()) {
             for (File plugFile : plugDir.listFiles()) {
-                if (plugFile.exists() && plugFile.isFile() && plugFile.getName().endsWith(".jar")) {
+                if (plugFile.exists() && plugFile.isFile() && plugFile.getName().toLowerCase().endsWith(".jar")) {
                     try {
                         System.out.println("   reading "+plugFile);
                         JarFile jarfile = new JarFile(plugFile);
@@ -258,6 +258,8 @@ public class IrcPluginManager {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                }else{
+                    System.out.println("   skipped "+plugFile);
                 }
             }
         }else System.out.println("plugin directory not found - skipping plugins.");
