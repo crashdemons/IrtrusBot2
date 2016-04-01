@@ -196,6 +196,7 @@ public class IrcBot {
             IrcCommand ic=session.readCommand();
             if(ic!=null) process_command(ic);
         }else disconnect();
+        manager.postEvent(IrcEventType.TICK);
         Thread.sleep(50);
         
         

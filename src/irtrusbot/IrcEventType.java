@@ -27,5 +27,7 @@ public enum IrcEventType {
     /** The event is notifying that the Bot is being stopped and plugins should finish operations. */
     BOT_STOP,
     /** This is a custom event to be used by inter-plugin communication. */
-    CUSTOM
+    CUSTOM,
+    /** This event specifies that a bot "tick" has occurred. A tick occurs about every 50ms or 20 Ticks/second*/
+    TICK
 }
