@@ -26,6 +26,9 @@ public class IrcBot {
      */
     public IrcState laststate=IrcState.DISCONNECTED;
     
+    
+    private int timer=0;
+    
     /** Add and initialize a plugin for the bot
      *  Plugins added at this point will be enabled and will receive Event messages from the bot.
      * @param plugin plugin class object to add.
@@ -196,8 +199,13 @@ public class IrcBot {
             IrcCommand ic=session.readCommand();
             if(ic!=null) process_command(ic);
         }else disconnect();
-        manager.postEvent(IrcEventType.TICK);
+        
+        if(timer==500){
+            timer=0;
+            manager.postEvent(IrcEventType.TICK);
+        }
         Thread.sleep(50);
+        timer+=50;
         
         
     }
