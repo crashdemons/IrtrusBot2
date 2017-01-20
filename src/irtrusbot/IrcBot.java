@@ -50,11 +50,12 @@ public class IrcBot implements IrcSessionCallback {
     
     /** Updates the internal IrcState of the bot
      * NOTE: this function also dispatches an Event message of type STATE to plugins with information about the previous and current state.
-     * 
+     * NOTE: will not change state if the bot has been put into QUITTING or QUIT states as these are irrecoverable.
      * @param newstate the new state to store for the bot.
      * @throws Exception An error occurred while dispatching messages to plugins.
      */
     public void updateState(IrcState newstate) throws Exception{
+        if(state==IrcState.QUITTING || state==IrcState.QUIT) return;//do not allow overriding program termination.
         if(laststate==newstate && state==newstate) return;
         laststate=state;
         state=newstate;
@@ -94,14 +95,15 @@ public class IrcBot implements IrcSessionCallback {
         session.disconnect();
         updateState(IrcState.DISCONNECTED);
     }
-    /** Disconnects from the IRC server
-     * NOTE: updates the internal bot state to QUIT always.
+    /** Disconnects from the IRC server and signals for program close.
+     * NOTE: updates the internal bot state to QUITTING, then QUIT during internal progress
      * This state is used, as opposed to DISCONNECTED, to indicate a unrecoverable error or human-triggered disconnection, possibly to prevent reconnection.
      * @see #disconnect()
      * @throws IOException A networking error occurred.
      * @throws Exception An error occurred while dispatching messages to plugins.
      */
     public void quit() throws IOException, Exception{
+        updateState(IrcState.QUITTING);
         session.disconnect();
         updateState(IrcState.QUIT);
     }

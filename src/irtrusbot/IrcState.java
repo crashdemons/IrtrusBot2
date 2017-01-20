@@ -22,6 +22,9 @@ public enum IrcState {
     LOGGED_IN,
     /** The bot has joined a channel */
     JOINED,
-    /** The bot failed login, received a fatal error message (or user-interaction) and has disconnected - do not reconnect automatically */
-    QUIT
+    /** The bot failed login, received a fatal error message (or user-interaction) and has disconnected - do not reconnect automatically - program is exiting */
+    QUIT,
+    /** The bot failed login, received a fatal error message (or user-interaction) and has disconnected - do not reconnect automatically - intermediate state used during program shutdown */
+    QUITTING
+    
 };
