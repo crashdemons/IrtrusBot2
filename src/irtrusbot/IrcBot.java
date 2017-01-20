@@ -3,12 +3,14 @@ package irtrusbot;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Class implementing the skeleton of controllable IRC bot or client with plugin support.
  *
  * @author crash
  */
-public class IrcBot {
+public class IrcBot implements IrcSessionCallback {
     /** Plugin Manager object used for controlling plugins and dispatching event messages
      * 
      */
@@ -58,6 +60,16 @@ public class IrcBot {
         state=newstate;
         manager.postEvent(IrcEventType.STATE);
         laststate=state;
+    }
+    
+    @Override
+    public void onConnectionError(Exception e){
+        try {
+            updateState(IrcState.DISCONNECTED);
+        } catch (Exception ex) {//An error occurred while dispatching messages to plugins.
+            //we don't handle this exception because IrcSession could not possibly do anything with this information
+            //and there is no reasonable response to this occurring.
+        }
     }
     
     /** Connects to the IRC server

@@ -1,7 +1,5 @@
 package irtrusbot;
 
-
-
 import java.io.*;
 import java.net.*;
 
@@ -13,6 +11,7 @@ public class IrcSession {
     /** Origin information about the client/user of the session.
      * Contains the user's Nickname, Username text, Hostname, and Ident status
      */
+    public IrcSessionCallback callback = null;
     public IrcOrigin account;
     String rname="";
     String pass="";
@@ -28,36 +27,76 @@ public class IrcSession {
     /** Running count of IRC Commands received during the object lifetime*/
     public int received;
     
+    private boolean socket_ready = false;
     private Socket socket = null;
     private BufferedWriter writer = null;
     private BufferedReader reader = null;
     
-    /** QUIT (if possible) and close the current IRC connection
+    
+    
+
+    
+     /** QUIT (if possible) and close the current IRC connection
      * NOTE: this function also sets all writers and sockets to null.
-     * @throws IOException Error occurred while sending QUIT or closing socket.
+     * Does not notify or throw an exception if closing the connection created an error.
+     * @param hard If true, the connection will release without attempting to send an IRC QUIT message.
      */
-    public void disconnect() throws IOException{
+    public void disconnect(boolean hard){
         if(isConnected()){
-            sendRawLine("QUIT :disconnecting");
-            try{Thread.sleep(1000);}catch(Exception e){}
-            socket.close();
+            if(!hard){
+                try{
+                    sendRawLine("QUIT :disconnecting");
+                    try{Thread.sleep(1000);}catch(Exception e){}//if possible without being interrupted, wait for the QUIT to be ACKnowledged.
+                }catch(IOException e){}//we're closing the connection. If this fails, it was already dead.
+            }
+            try{socket.close();}catch(IOException e){}//we're closing the connection. If this fails, it was already dead.
         }
+        socket_ready=false;
         socket=null;
         writer=null;
         reader=null;
     }
     
+    
+    /** QUIT (if possible) and close the current IRC connection
+     * NOTE: this function also sets all writers and sockets to null.
+     * This call is equivalent to disconnect(false).
+     * @see #disconnect(boolean) 
+     */
+    public void disconnect(){
+        disconnect(false);
+    }
+    
+    
+    private void handleConnectionError(String action,Exception e){
+        System.out.println("Connection error during "+action+" "+e.toString());
+        if(callback!=null) callback.onConnectionError(e);
+        disconnect(true);
+    }
+    
+    /** Send PING to IRC server. This has the dual purpose of keeping the connection alive and testing for socket errors.
+     * 
+     */
+    public void sendKeepalive() throws IOException{
+        sendRawLine("PING :KEEPALIVE");
+    }
+    
+    
     /** Connect to the configured IRC server and port.
      * 
      * @return True: connection successful. False: connection failed.
-     * @throws UnknownHostException The hostname could not be found
-     * @throws IOException Error occurred while creating socket streams.
      */
-    public boolean connect() throws UnknownHostException,IOException{
-        socket=new Socket(server, 6667);//TODO: error-check  new Socket(...) before creating streams.
-        writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        return socket.isConnected();
+    public boolean connect(){
+        socket_ready=false;
+        try{
+            socket=new Socket(server, 6667);//TODO: error-check  new Socket(...) before creating streams.
+            writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            socket_ready=true;
+        }catch(Exception e){
+            handleConnectionError("connect",e);
+        }
+        return socket_ready;
     }
     
     /** Determine if the session is currently connected to the IRC Server
@@ -66,7 +105,7 @@ public class IrcSession {
      */
     public boolean isConnected(){ 
         if(socket==null) return false;
-        else return socket.isConnected();
+        else return socket_ready;
     }
     
     /** Sends the configured user information to the server (for initial connections).
@@ -126,15 +165,20 @@ public class IrcSession {
     /** Read a single IRC Command line of text from the server
      * 
      * @return Connected: Raw IRC Command string  |  Not Connected: null
-     * @throws IOException Error reading data.
      */
-    public String readRawLine() throws IOException{
+    public String readRawLine(){
         if(!isConnected()) return null;
         String line="";
-        if(reader.ready()){
-            line=reader.readLine();
+        
+        try{
+            if(reader.ready()){
+                line=reader.readLine();
+            }
+            if(line==null) throw new IOException("null read");
+        }catch(IOException e){
+            handleConnectionError("readRawLine",e);
         }
-        if(line==null) throw new IOException("null");
+        
         if(line.length()>0){
             System.out.println("< "+line);
             received++;
@@ -150,8 +194,10 @@ public class IrcSession {
     public void sendRawLine(String line) throws IOException{
         if(!isConnected()) return;
         System.out.println("> "+line);
-        writer.write(line + "\r\n");
-        writer.flush();
+        try{
+            writer.write(line + "\r\n");
+            writer.flush();
+        }catch(IOException e){handleConnectionError("sendRawLine",e);}
         sent++;
     }
     
