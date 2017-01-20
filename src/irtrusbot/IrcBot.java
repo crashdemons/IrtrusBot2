@@ -57,6 +57,7 @@ public class IrcBot implements IrcSessionCallback {
     public void updateState(IrcState newstate) throws Exception{
         if(state==IrcState.QUITTING || state==IrcState.QUIT) return;//do not allow overriding program termination.
         if(laststate==newstate && state==newstate) return;
+        System.out.println("STATE: "+state.name()+" -> "+newstate.name());
         laststate=state;
         state=newstate;
         manager.postEvent(IrcEventType.STATE);
