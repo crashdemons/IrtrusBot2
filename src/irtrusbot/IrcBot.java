@@ -262,6 +262,7 @@ public class IrcBot implements IrcSessionCallback {
      */
     public IrcBot() throws URISyntaxException {
          manager = new IrcPluginManager(this);
+         session.callback=this;
         //manager.bot=this;
     }
 }
